@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Patel Craftex</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pb-blue: #1040D5;
+            --bg: #F0F2F5;
+            --green: #25D366;
+            --red: #FF3B30;
+            --orange: #FF9500;
+            --text-dark: #1C1E21;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        .mobile-frame { width: 100%; max-width: 450px; background: #fff; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+
+        /* HEADER */
+        .header { background: var(--pb-blue); color: white; padding: 15px 15px 5px 15px; flex-shrink: 0; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .business-name { font-weight: 700; font-size: 1.2rem; }
+        
+        .date-strip { display: flex; justify-content: space-between; text-align: center; }
+        .date-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; opacity: 0.7; cursor: pointer; color: white; padding-bottom: 10px; }
+        .date-item.active { opacity: 1; position: relative; }
+        .date-item.active::after { content: ''; position: absolute; bottom: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 6px solid #F0F2F5; }
+        .date-day { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; }
+        .date-num { font-size: 1.2rem; font-weight: 700; margin-top: 2px; }
+
+        /* STATS */
+        .stats-row { display: flex; gap: 10px; padding: 15px; background: var(--bg); margin-top: -1px; }
+        .stat-card { flex: 1; background: white; border-radius: 8px; padding: 15px 5px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; }
+        .stat-val { display: block; font-size: 1.2rem; font-weight: 700; margin-bottom: 2px; }
+        .stat-lbl { font-size: 0.75rem; color: #666; }
+
+        /* VIEWS */
+        .view-section { display: none; flex: 1; overflow-y: auto; background: var(--bg); padding-bottom: 80px; }
+        .view-section.active { display: block; }
+
+        /* CARDS */
+        .staff-list { padding: 0 15px; }
+        .staff-card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; }
+        .card-row-top { display: flex; justify-content: space-between; align-items: center; }
+        .card-row-bottom { display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+
+        .avatar { width: 40px; height: 40px; background: #EBF0FF; color: var(--pb-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; font-size: 1.1rem; }
+        .pill { padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .pill-in { background: #e7fcf0; color: #6c0a0a; }
+        .pill-out { background: #ffebeb; color: #0a6c38; }
+        .pill-break { background: #fff4e5; color: #b56c07; }
+        .pill-absent { background: #ffebeb; color: var(--red); border: 1px solid #ffcccc; }
+        .pill-idle { background: #f0f2f5; color: #666; }
+
+        .mini-stat { display: flex; flex-direction: column; text-align: center; flex: 1; }
+        .mini-stat:first-child { text-align: left; }
+        .mini-stat:last-child { text-align: right; }
+        .mini-label { font-size: 0.65rem; color: #888; text-transform: uppercase; margin-bottom: 3px; }
+        .mini-val { font-size: 0.95rem; font-weight: 600; font-family: monospace; }
+        
+        .val-work { color: var(--text-dark); }
+        .val-break { color: var(--orange); }
+        .val-total { color: #666; } /* Shift Duration */
+        .ticking { color: var(--pb-blue); }
+
+        /* MANAGE STAFF */
+        .add-staff-box { background: white; padding: 20px; margin: 15px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .input-row { display: flex; gap: 10px; }
+        .pb-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+        .pb-btn { background: var(--pb-blue); color: white; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .manage-list { padding: 0 15px; }
+        .manage-item { background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .manage-item:first-child { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .manage-item:last-child { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; border-bottom: none; }
+
+        /* HISTORY */
+        .history-date-block { background: white; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; margin-left: 15px; margin-right: 15px; }
+        .h-header { background: #f8f9fa; padding: 10px 15px; font-weight: bold; font-size: 0.9rem; color: #333; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .h-row { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; font-size: 0.9rem; }
+        .h-name { font-weight: 600; color: var(--text-dark); }
+        .h-time { font-family: monospace; color: var(--pb-blue); font-weight: 600; }
+
+        /* PROFILE */
+        .profile-container { padding: 20px; background: white; height: 100%; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;}
+        .btn-save { background: var(--pb-blue); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-danger { background: white; color: red; border: 1px solid red; margin-top: 10px; width: 100%; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { background: white; border-top: 1px solid #E4E6EB; display: flex; justify-content: space-around; padding: 10px 0; position: absolute; bottom: 0; width: 100%; z-index: 10; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #9CA3AF; font-size: 0.7rem; gap: 4px; cursor: pointer; }
+        .nav-item.active { color: var(--pb-blue); font-weight: 600; }
+        .nav-item i { font-size: 1.3rem; }
+
+        /* FAB */
+        .fab { position: absolute; bottom: 80px; right: 20px; background: var(--pb-blue); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 64, 213, 0.4); z-index: 5; transition: transform 0.2s; }
+        .fab:active { transform: scale(0.95); }
+
+        /* MODALS */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; display: none; align-items: flex-end; }
+        .sheet { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; animation: slideUp 0.25s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .timer-grid { display: flex; gap: 10px; margin: 20px 0; }
+        .timer-box { flex: 1; background: #f8f9fa; padding: 10px 5px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+        .t-val { display: block; font-size: 1.3rem; font-weight: 700; font-family: monospace; color: var(--text-dark); }
+        .t-lbl { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px;}
+
+        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;}
+        .btn-absent { background: #fee2e2; color: var(--red); }
+        .btn-trash { color: #ccc; cursor: pointer; font-size: 1.2rem; }
+        .btn-trash:hover { color: var(--red); }
+        
+        .select-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+
+        /* MOBILE FIX */
+        @media screen and (max-width: 600px) {
+            body { background: #fff; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; margin: 0; }
+            .mobile-frame { height: 100%; width: 100%; max-width: 100%; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; }
+            .view-section { flex: 1; overflow-y: auto; padding-bottom: 90px; -webkit-overflow-scrolling: touch; }
+            .bottom-nav { position: absolute; bottom: 0; width: 100%; padding-bottom: env(safe-area-inset-bottom); background: #fff; }
+            .fab { bottom: calc(80px + env(safe-area-inset-bottom)); right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-frame">
+    <div class="header">
+        <div class="top-bar">
+            <div class="business-name" id="displayBizName">My Business</div>
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="date-strip" id="dateStrip"></div>
+    </div>
+
+    <div id="statsRow" class="stats-row">
+        <div class="stat-card">
+            <span class="stat-val" id="statP" style="color:var(--green)">0</span>
+            <span class="stat-lbl">Present</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-val" id="statA" style="color:var(--red)">0</span>
+            <span class="stat-lbl">Absent</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-val" id="statH">0h</span>
+            <span class="stat-lbl">Work Hrs</span>
+        </div>
+    </div>
+
+    <div id="view-attendance" class="view-section active">
+        <div class="staff-list" id="attendanceContainer"></div>
+        <button class="fab" onclick="openSelectStaffModal()"><i class="fas fa-plus"></i></button>
+    </div>
+
+    <div id="view-history" class="view-section">
+        <div style="padding:15px; text-align:center; font-weight:bold; color:#666;">History Log</div>
+        <div id="historyContainer" style="padding:10px;"></div>
+    </div>
+
+    <div id="view-staff" class="view-section">
+        <div class="add-staff-box">
+            <div style="margin-bottom:10px; font-weight:bold;">Add New Employee</div>
+            <div class="input-row">
+                <input type="text" id="newStaffInput" class="pb-input" placeholder="e.g. Jil Patel">
+                <button class="pb-btn" onclick="addNewStaff()">ADD</button>
+            </div>
+        </div>
+        <div style="padding:0 15px 10px 15px; font-size:0.8rem; color:#666; font-weight:bold; text-transform:uppercase;">Your Staff List</div>
+        <div class="manage-list" id="manageStaffContainer"></div>
+    </div>
+
+    <div id="view-profile" class="view-section">
+        <div class="profile-container">
+            <h3>Settings</h3>
+            <div class="input-group">
+                <label>Business Name</label>
+                <input type="text" id="bizNameInput" placeholder="Enter name">
+            </div>
+            <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+            <br><br>
+            <button class="btn-danger" onclick="resetAllData()">Reset All Data</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('attendance', this)">
+            <i class="fas fa-users"></i><span>Attendance</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('history', this)">
+            <i class="fas fa-history"></i><span>History</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('staff', this)">
+            <i class="fas fa-user-cog"></i><span>Staff</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', this)">
+            <i class="fas fa-store"></i><span>Profile</span>
+        </div>
+    </div>
+
+    <div class="overlay" id="actionModal" onclick="if(event.target===this) closeModal()">
+        <div class="sheet">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 id="modalName" style="margin:0;">Name</h3>
+                <i class="fas fa-trash-alt btn-trash" onclick="removeStaffFromDay()" title="Remove from Today"></i>
+            </div>
+            
+            <div class="timer-grid">
+                <div class="timer-box">
+                    <span class="t-val" id="modalWorkTimer">00:00:00</span>
+                    <span class="t-lbl">Work Time</span>
+                </div>
+                <div class="timer-box">
+                    <span class="t-val" id="modalBreakTimer" style="color:var(--orange)">00:00:00</span>
+                    <span class="t-lbl">Break Time</span>
+                </div>
+                <div class="timer-box" style="background:#eef2ff; border-color:#dbeafe;">
+                    <span class="t-val" id="modalTotalTimer" style="color:var(--pb-blue)">00:00:00</span>
+                    <span class="t-lbl">Shift Duration</span>
+                </div>
+            </div>
+
+            <div id="modalActions"></div>
+            <button class="action-btn" onclick="closeModal()" style="background:#f0f2f5; color:#333; margin-top:10px;">Close</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="selectStaffModal" onclick="if(event.target===this) closeSelectModal()">
+        <div class="sheet">
+            <h3>Add to Today's List</h3>
+            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">Tap a name to add them to the attendance list.</div>
+            <div id="selectStaffList"></div>
+            <button class="action-btn" onclick="closeSelectModal()" style="background:#f0f2f5; color:#333; margin-top:15px;">Cancel</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- DATA ---
+    let db_staff = JSON.parse(localStorage.getItem('pb_db_staff')) || []; 
+    let db_live = JSON.parse(localStorage.getItem('pb_live_data')) || {};
+    let db_history = JSON.parse(localStorage.getItem('pb_history_data')) || {};
+    let db_removed = JSON.parse(localStorage.getItem('pb_removed_data')) || {};
+    let db_bizName = localStorage.getItem('pb_bizName') || 'My Business';
+
+    let appState = {
+        todayStr: new Date().toISOString().split('T')[0],
+        selectedDate: new Date().toISOString().split('T')[0],
+        activeStaffId: null
+    };
+
+    // --- INIT ---
+    document.getElementById('displayBizName').textContent = db_bizName;
+    document.getElementById('bizNameInput').value = db_bizName;
+    renderDateStrip();
+    renderAttendanceView();
+    renderStaffManager();
+    setInterval(updateHeartbeat, 1000);
+
+    // --- NAVIGATION ---
+    function switchTab(tabName, el) {
+        document.querySelectorAll('.view-section').forEach(d => d.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+        document.getElementById('view-' + tabName).classList.add('active');
+        el.classList.add('active');
+        document.getElementById('statsRow').style.display = (tabName === 'attendance') ? 'flex' : 'none';
+
+        if(tabName === 'history') renderHistoryView();
+        if(tabName === 'staff') renderStaffManager();
+        if(tabName === 'attendance') renderAttendanceView();
+    }
+
+    // --- RENDERERS ---
+    function renderDateStrip() {
+        const strip = document.getElementById('dateStrip');
+        strip.innerHTML = '';
+        for(let i=4; i>=0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateKey = d.toISOString().split('T')[0];
+            const isToday = (dateKey === appState.todayStr);
+            const isActive = (dateKey === appState.selectedDate);
+            const el = document.createElement('div');
+            el.className = `date-item ${isActive ? 'active' : ''}`;
+            el.onclick = () => { appState.selectedDate = dateKey; renderDateStrip(); renderAttendanceView(); };
+            el.innerHTML = `<span class="date-day">${isToday ? 'TODAY' : d.toLocaleDateString('en-US',{weekday:'short'})}</span><span class="date-num">${d.getDate()}</span>`;
+            strip.appendChild(el);
+        }
+    }
+
+    function renderAttendanceView() {
+        const container = document.getElementById('attendanceContainer');
+        container.innerHTML = '';
+        const isLive = (appState.selectedDate === appState.todayStr);
+        
+        let activeStaff = db_staff.filter(s => s.joined <= appState.selectedDate);
+        const removedForDay = db_removed[appState.selectedDate] || [];
+        activeStaff = activeStaff.filter(s => !removedForDay.includes(s.name));
+
+        if(activeStaff.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#999; font-size:0.9rem;">No staff visible.<br>Use <b>+</b> to add staff.</div>`;
+            updateStats(0,0,0);
+            return;
+        }
+
+        let p=0, a=0, totalH=0;
+
+        activeStaff.forEach(s => {
+            const name = s.name;
+            let status = 'idle', wMs = 0, bMs = 0, label = 'Mark', pillClass = 'pill-idle';
+
+            if(isLive) {
+                if(!db_live[name]) db_live[name] = { state: 'idle', lastAction: 0, workMs: 0, breakMs: 0, startTime: null };
+                const l = db_live[name];
+                status = l.state;
+                const t = calcTimes(l);
+                wMs = t.w; bMs = t.b;
+
+                if(status === 'in') { label = 'Punched In'; pillClass = 'pill-in'; p++; }
+                else if(status === 'break') { label = 'On Break'; pillClass = 'pill-break'; p++; }
+                else if(status === 'out') { label = 'Present'; pillClass = 'pill-out'; p++; }
+                else if(status === 'absent') { label = 'Absent'; pillClass = 'pill-absent'; a++; }
+                else { a++; }
+            } else {
+                // RICH HISTORY RENDERING
+                const h = db_history[appState.selectedDate];
+                if(h && h[name]) { 
+                    status = 'done'; 
+                    wMs = h[name].workMs || 0; 
+                    bMs = h[name].breakMs || 0;
+                    label = 'Present'; 
+                    pillClass = 'pill-in'; 
+                    p++; 
+                } else { 
+                    label = 'Absent'; pillClass = 'pill-out'; a++; 
+                }
+            }
+
+            totalH += wMs; // Sum of WORK TIME only
+            const safeName = name.replace(/\s/g, '_');
+            const shiftDuration = wMs; 
+
+            container.innerHTML += `
+                <div class="staff-card" onclick="openActionModal('${name}')">
+                    <div class="card-row-top">
+                        <div style="display:flex; align-items:center;">
+                            <div class="avatar">${name[0]}</div>
+                            <div style="font-weight:600; color:#333;">${name}</div>
+                        </div>
+                        <div class="pill ${pillClass}">${label}</div>
+                    </div>
+                    <div class="card-row-bottom">
+                        <div class="mini-stat">
+                            <span class="mini-label">Work Time</span>
+                            <span id="w-${safeName}" class="mini-val val-work ${status==='in'?'ticking':''}">${formatTime(wMs)}</span>
+                        </div>
+                        <div class="mini-stat" style="text-align:center;">
+                            <span class="mini-label">Break Time</span>
+                            <span id="b-${safeName}" class="mini-val val-break">${formatTime(bMs)}</span>
+                        </div>
+                        <div class="mini-stat" style="text-align:right;">
+                            <span class="mini-label">Shift Duration</span>
+                            <span id="t-${safeName}" class="mini-val val-total ${status==='in'?'ticking':''}">${formatTime(shiftDuration)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        updateStats(p, a, totalH);
+    }
+
+    function renderStaffManager() {
+        const container = document.getElementById('manageStaffContainer');
+        container.innerHTML = '';
+        if(db_staff.length === 0) {
+            container.innerHTML = `<div style="padding:15px; color:#999; text-align:center;">List is empty.</div>`;
+            return;
+        }
+        db_staff.forEach(s => {
+            container.innerHTML += `
+                <div class="manage-item">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="avatar" style="width:32px; height:32px; font-size:0.8rem;">${s.name[0]}</div>
+                        <div style="font-weight:600;">${s.name}</div>
+                    </div>
+                    <i class="fas fa-trash-alt btn-trash" onclick="deletePermanent('${s.name}')"></i>
+                </div>
+            `;
+        });
+    }
+
+    // --- ACTIONS ---
+    function openSelectStaffModal() {
+        if(appState.selectedDate !== appState.todayStr) { alert("Can only modify today's roster."); return; }
+        
+        const container = document.getElementById('selectStaffList');
+        container.innerHTML = '';
+        
+        const eligible = db_staff.filter(s => s.joined <= appState.selectedDate);
+        const removedForDay = db_removed[appState.selectedDate] || [];
+        const hidden = eligible.filter(s => removedForDay.includes(s.name));
+
+        if(hidden.length === 0) {
+             container.innerHTML = `<div style="text-align:center; padding:20px;">All staff are visible.</div>`;
+        } else {
+            hidden.forEach(s => {
+                container.innerHTML += `
+                    <div class="select-item" onclick="addStaffToDay('${s.name}')">
+                        <div class="avatar" style="width:30px; height:30px; font-size:0.8rem;">${s.name[0]}</div>
+                        <span style="font-weight:600;">${s.name}</span>
+                        <span style="margin-left:auto; color:var(--pb-blue); font-size:0.8rem; font-weight:bold;">ADD +</span>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('selectStaffModal').style.display = 'flex';
+    }
+
+    function addStaffToDay(name) {
+        let list = db_removed[appState.selectedDate] || [];
+        list = list.filter(n => n !== name);
+        db_removed[appState.selectedDate] = list;
+        localStorage.setItem('pb_removed_data', JSON.stringify(db_removed));
+        closeSelectModal();
+        renderAttendanceView();
+    }
+    function closeSelectModal() { document.getElementById('selectStaffModal').style.display = 'none'; }
+
+    function addNewStaff() {
+        const input = document.getElementById('newStaffInput');
+        const name = input.value.trim();
+        if(!name) return;
+        db_staff.push({ name: name, joined: appState.todayStr });
+        localStorage.setItem('pb_db_staff', JSON.stringify(db_staff));
+        input.value = '';
+        renderStaffManager();
+        renderAttendanceView();
+        alert("Staff Added!");
+    }
+
+    function deletePermanent(name) {
+        if(!confirm(`Delete ${name} permanently?`)) return;
+        db_staff = db_staff.filter(s => s.name !== name);
+        delete db_live[name]; 
+        localStorage.setItem('pb_db_staff', JSON.stringify(db_staff));
+        localStorage.setItem('pb_live_data', JSON.stringify(db_live));
+        renderStaffManager();
+        renderAttendanceView();
+    }
+
+    function removeStaffFromDay() {
+        if(!confirm("Remove from today's view?")) return;
+        const name = appState.activeStaffId;
+        if(!db_removed[appState.selectedDate]) db_removed[appState.selectedDate] = [];
+        db_removed[appState.selectedDate].push(name);
+        localStorage.setItem('pb_removed_data', JSON.stringify(db_removed));
+        db_live[name] = { state: 'idle', lastAction: 0, workMs: 0, breakMs: 0, startTime: null };
+        localStorage.setItem('pb_live_data', JSON.stringify(db_live));
+        closeModal();
+        renderAttendanceView();
+    }
+
+    function openActionModal(name) {
+        if(appState.selectedDate !== appState.todayStr) { alert("Read-only view."); return; }
+        appState.activeStaffId = name;
+        document.getElementById('modalName').textContent = name;
+        document.getElementById('actionModal').style.display = 'flex';
+        updateActionUI();
+    }
+    function closeModal() { document.getElementById('actionModal').style.display = 'none'; appState.activeStaffId = null; }
+
+    function updateActionUI() {
+        const name = appState.activeStaffId;
+        const l = db_live[name];
+        const container = document.getElementById('modalActions');
+        
+        const t = calcTimes(l);
+        document.getElementById('modalWorkTimer').textContent = formatTime(t.w);
+        document.getElementById('modalBreakTimer').textContent = formatTime(t.b);
+        document.getElementById('modalTotalTimer').textContent = formatTime(t.w);
+
+        container.innerHTML = '';
+        if(l.state === 'idle') {
+            container.innerHTML = `
+                <button class="action-btn" style="background:var(--green); color:white" onclick="changeState('in')"><i class="fas fa-fingerprint"></i> Punch In Now</button>
+                
+                <div style="background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;">
+                    <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">Or Manual Entry:</div>
+                    <div style="display:flex; gap:5px;">
+                        <input type="time" id="manualTimeInput" class="pb-input" style="padding:10px; background:white;">
+                        <button class="pb-btn" onclick="submitManualEntry()" style="padding:0 15px;">GO</button>
+                    </div>
+                </div>
+
+                <button class="action-btn btn-absent" onclick="changeState('absent')"><i class="fas fa-user-times"></i> Mark Absent</button>
+            `;
+        } else if(l.state === 'in') {
+            container.innerHTML = `
+                <button class="action-btn" style="background:var(--orange); color:white" onclick="changeState('break')"><i class="fas fa-coffee"></i> Start Break</button>
+                <button class="action-btn" style="background:var(--red); color:white" onclick="changeState('out')"><i class="fas fa-sign-out-alt"></i> Punch Out</button>
+            `;
+        } else if(l.state === 'break') {
+            container.innerHTML = `<button class="action-btn" style="background:var(--pb-blue); color:white" onclick="changeState('in')"><i class="fas fa-play"></i> End Break</button>`;
+        } else if(l.state === 'out') {
+            container.innerHTML = `<button class="action-btn" disabled style="background:#eee; color:#999">Shift Ended</button>`;
+        } else if(l.state === 'absent') {
+            container.innerHTML = `<button class="action-btn" onclick="changeState('idle')" style="background:#eee; color:#333">Undo Absent</button>`;
+        }
+    }
+
+    function submitManualEntry() {
+        const timeVal = document.getElementById('manualTimeInput').value;
+        if(!timeVal) return alert("Please select a time first.");
+
+        const [h, m] = timeVal.split(':');
+        const now = new Date();
+        const entryTime = new Date();
+        entryTime.setHours(h, m, 0, 0);
+
+        if(entryTime > now) {
+            alert("Cannot start in the future!");
+            return;
+        }
+
+        const name = appState.activeStaffId;
+        const l = db_live[name];
+
+        l.startTime = entryTime.getTime();
+        l.lastAction = now.getTime();
+        l.workMs = l.lastAction - l.startTime;
+        l.state = 'in';
+
+        localStorage.setItem('pb_live_data', JSON.stringify(db_live));
+        updateActionUI();
+        renderAttendanceView();
+    }
+
+    function changeState(newState) {
+        const name = appState.activeStaffId;
+        const now = Date.now();
+        const l = db_live[name];
+
+        if(l.state === 'idle' && newState === 'in') l.startTime = now;
+        if(l.state === 'in') l.workMs += (now - l.lastAction);
+        if(l.state === 'break') l.breakMs += (now - l.lastAction);
+
+        l.state = newState;
+        l.lastAction = now;
+
+        if(newState === 'out') {
+            if(!db_history[appState.todayStr]) db_history[appState.todayStr] = {};
+            // SAVING RICH HISTORY
+            db_history[appState.todayStr][name] = { 
+                workMs: l.workMs,
+                breakMs: l.breakMs,
+                startTime: l.startTime,
+                endTime: now
+            };
+            localStorage.setItem('pb_history_data', JSON.stringify(db_history));
+        }
+
+        localStorage.setItem('pb_live_data', JSON.stringify(db_live));
+        updateActionUI();
+        renderAttendanceView();
+    }
+
+    // --- TIMERS ---
+    function calcTimes(l) {
+        let w = l.workMs || 0;
+        let b = l.breakMs || 0;
+        const now = Date.now();
+        if(l.state === 'in') w += (now - l.lastAction);
+        if(l.state === 'break') b += (now - l.lastAction);
+        return { w, b };
+    }
+
+    function updateHeartbeat() {
+        if(appState.selectedDate !== appState.todayStr) return;
+        let totalH = 0;
+        const removedForDay = db_removed[appState.selectedDate] || [];
+        const activeStaff = db_staff.filter(s => s.joined <= appState.selectedDate && !removedForDay.includes(s.name));
+
+        activeStaff.forEach(s => {
+            const name = s.name;
+            const l = db_live[name];
+            if(!l) return;
+            const t = calcTimes(l);
+            totalH += t.w;
+            
+            const safeName = name.replace(/\s/g, '_');
+            const wEl = document.getElementById(`w-${safeName}`);
+            const bEl = document.getElementById(`b-${safeName}`);
+            const tEl = document.getElementById(`t-${safeName}`);
+            
+            if(wEl) wEl.textContent = formatTime(t.w);
+            if(bEl) bEl.textContent = formatTime(t.b);
+            if(tEl) tEl.textContent = formatTime(t.w);
+
+            if(appState.activeStaffId === name && document.getElementById('actionModal').style.display === 'flex') {
+                document.getElementById('modalWorkTimer').textContent = formatTime(t.w);
+                document.getElementById('modalBreakTimer').textContent = formatTime(t.b);
+                document.getElementById('modalTotalTimer').textContent = formatTime(t.w);
+            }
+        });
+        document.getElementById('statH').textContent = Math.floor(totalH/3600000) + 'h';
+    }
+
+    function updateStats(p, a, h) {
+        document.getElementById('statP').textContent = p;
+        document.getElementById('statA').textContent = a;
+        document.getElementById('statH').textContent = Math.floor(h/3600000) + 'h';
+    }
+
+    function formatTime(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }
+
+    function saveProfile() {
+        const n = document.getElementById('bizNameInput').value;
+        db_bizName = n;
+        localStorage.setItem('pb_bizName', n);
+        document.getElementById('displayBizName').textContent = n;
+        alert("Saved!");
+    }
+
+    function resetAllData() {
+        if(confirm("Delete ALL data (Staff & History)?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function renderHistoryView() {
+        const c = document.getElementById('historyContainer');
+        c.innerHTML = '';
+        Object.keys(db_history).sort().reverse().forEach(date => {
+            const d = db_history[date];
+            let rows = '';
+            Object.keys(d).forEach(name => {
+                rows += `<div class="h-row"><span class="h-name">${name}</span><span class="h-time">${formatTime(d[name].workMs)}</span></div>`;
+            });
+            c.innerHTML += `<div class="history-date-block"><div class="h-header"><span>${date}</span><span>${Object.keys(d).length} Present</span></div>${rows}</div>`;
+        });
+    }
+
+</script>
+</body>
+</html>
