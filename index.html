@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Patel Craftex</title>
+    <title>Patel Craftex - Multi-Punch</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         /* CSS STYLES */
@@ -71,9 +71,8 @@
 
         .avatar { width: 40px; height: 40px; background: #EBF0FF; color: var(--pb-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; font-size: 1.1rem; }
         .pill { padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .pill-in { background: #e7fcf0; color: #6c0a0a; }
-        .pill-out { background: #ffebeb; color: #0a6c38; }
-        .pill-break { background: #fff4e5; color: #b56c07; }
+        .pill-in { background: #e7fcf0; color: #0a6c38; }
+        .pill-out { background: #f0f2f5; color: #666; }
         .pill-absent { background: #ffebeb; color: var(--red); border: 1px solid #ffcccc; }
         .pill-idle { background: #f0f2f5; color: #666; }
 
@@ -84,7 +83,6 @@
         .mini-val { font-size: 0.95rem; font-weight: 600; font-family: monospace; }
         
         .val-work { color: var(--text-main); }
-        .val-break { color: var(--orange); }
         .val-total { color: var(--text-sub); }
         .ticking { color: var(--pb-blue); }
 
@@ -135,9 +133,6 @@
         .made-by h4 { margin: 0; font-size: 1rem; color: var(--text-main); }
         .made-by p { margin: 2px 0 0 0; font-size: 0.75rem; }
 
-        .btn-logout { width: 100%; padding: 15px; border: none; background: var(--card-bg); color: var(--red); font-weight: bold; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-top: 10px; font-size: 1rem; cursor: pointer; }
-
-        /* BOTTOM NAV */
         .bottom-nav { background: var(--card-bg); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; position: absolute; bottom: 0; width: 100%; z-index: 10; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #9CA3AF; font-size: 0.7rem; gap: 4px; cursor: pointer; }
         .nav-item.active { color: var(--pb-blue); font-weight: 600; }
@@ -152,10 +147,10 @@
         .sheet { background: var(--card-bg); width: 100%; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; animation: slideUp 0.25s; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .timer-grid { display: flex; gap: 10px; margin: 20px 0; }
-        .timer-box { flex: 1; background: var(--bg); padding: 10px 5px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
-        .t-val { display: block; font-size: 1.3rem; font-weight: 700; font-family: monospace; color: var(--text-dark); }
-        .t-lbl { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px;}
+        .timer-grid { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
+        .timer-box { flex: 1; max-width: 200px; background: var(--bg); padding: 15px 5px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
+        .t-val { display: block; font-size: 1.6rem; font-weight: 700; font-family: monospace; color: var(--pb-blue); }
+        .t-lbl { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px;}
 
         .action-btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;}
         .btn-absent { background: #fee2e2; color: var(--red); }
@@ -216,7 +211,6 @@
             <div style="font-size:0.85rem; color:var(--text-sub); margin-bottom:20px;">Please enter password to access.</div>
             <input type="password" id="loginPassInput" class="pb-input" placeholder="Password" style="text-align:center; letter-spacing:5px; margin-bottom:15px; font-size:1.2rem;">
             <button class="pb-btn" onclick="checkLogin()" style="width:100%; padding:15px;">LOGIN</button>
-           <!-- <div style="margin-top:15px; font-size:0.75rem; color:var(--text-sub);">Default: 1234</div> -->
         </div>
     </div>
 
@@ -256,7 +250,7 @@
             </div>
             <div class="stat-card">
                 <span class="stat-val" id="statH">0h</span>
-                <span class="stat-lbl">Work Hrs</span>
+                <span class="stat-lbl">Total Hours</span>
             </div>
         </div>
 
@@ -301,10 +295,6 @@
                             <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
                             <span class="slider"></span>
                         </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label"><i class="fas fa-clock"></i> Default Shift Hours</div>
-                        <input type="number" id="defaultShiftInput" class="pb-input" style="width:60px; padding:8px;" value="9" onblur="saveProfile()">
                     </div>
                 </div>
                 
@@ -367,30 +357,20 @@
                 </div>
                 
                 <div class="timer-grid">
-                    <div class="timer-box">
-                        <span class="t-val" id="modalWorkTimer">00:00:00</span>
-                        <span class="t-lbl">Work Time</span>
-                    </div>
-                    <div class="timer-box">
-                        <span class="t-val" id="modalBreakTimer" style="color:var(--orange)">00:00:00</span>
-                        <span class="t-lbl">Break Time</span>
-                    </div>
                     <div class="timer-box" style="background:#eef2ff; border-color:#dbeafe;">
                         <span class="t-val" id="modalTotalTimer" style="color:var(--pb-blue)">00:00:00</span>
-                        <span class="t-lbl">Shift Duration</span>
+                        <span class="t-lbl">Total Work Time</span>
                     </div>
                 </div>
 
                 <div id="modalActions"></div>
 
                 <div id="modalManualSection" class="manual-box">
-                    <div style="font-size:0.8rem; color:var(--text-sub); margin-bottom:10px; font-weight:bold; text-transform:uppercase;">Attendance Editor</div>
+                    <div style="font-size:0.8rem; color:var(--text-sub); margin-bottom:10px; font-weight:bold; text-transform:uppercase;">Manual Correction</div>
                     <div style="display:flex; flex-direction:column; gap:10px;">
                         <select id="editParamSelect" class="pb-input" style="background:var(--bg); padding:10px; font-weight:500;">
-                            <option value="fix_in">Update Punch In Time</option>
-                            <option value="fix_out">Update Punch Out Time</option>
-                            <option value="retro_break_start">Started Break at...</option>
-                            <option value="retro_break_end">Ended Break at...</option>
+                            <option value="fix_in">Update Start Time (Current Session)</option>
+                            <option value="fix_out">Force Punch Out at...</option>
                         </select>
                         <div style="display:flex; gap:5px;">
                             <input type="time" id="manualSingleTime" class="pb-input" style="padding:10px; background:var(--bg);">
@@ -450,6 +430,7 @@
 
     // --- DATA ---
     let db_staff = JSON.parse(localStorage.getItem('pb_db_staff')) || []; 
+    // db_live schema: { state: 'in'|'out', lastAction: ts, totalWorkMs: int, currentStart: ts }
     let db_live = JSON.parse(localStorage.getItem('pb_live_data')) || {};
     let db_history = JSON.parse(localStorage.getItem('pb_history_data')) || {};
     let db_removed = JSON.parse(localStorage.getItem('pb_removed_data')) || {};
@@ -470,7 +451,6 @@
     };
 
     // --- LOGIN LOGIC ---
-    // Handle Enter key in login
     document.getElementById('loginPassInput').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { checkLogin(); }
     });
@@ -491,7 +471,6 @@
     document.getElementById('bizNameInput').value = db_bizName;
     document.getElementById('currencyInput').value = db_currency;
     document.getElementById('hourlyRateInput').value = db_hourlyRate;
-    // Don't prefill password input in settings for security, just let them overwrite it if needed
 
     if(db_prefs.dark) {
         document.body.classList.add('dark-mode');
@@ -509,10 +488,10 @@
         localStorage.setItem('pb_prefs', JSON.stringify(db_prefs));
     }
 
-    // EXPORT LOGIC (CSV for Excel)
+    // EXPORT LOGIC
     function exportToExcel() {
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Date,Staff Name,Check In,Check Out,Break Duration,Work Duration,Est. Pay (" + db_currency + ")\r\n";
+        csvContent += "Date,Staff Name,First In,Last Out,Total Work Duration,Est. Pay (" + db_currency + ")\r\n";
 
         const dates = Object.keys(db_history).sort().reverse();
         dates.forEach(date => {
@@ -521,14 +500,11 @@
                 const r = dayData[name];
                 const inTime = r.startTime ? new Date(r.startTime).toLocaleTimeString() : '--:--';
                 const outTime = r.endTime ? new Date(r.endTime).toLocaleTimeString() : '--:--';
-                
-                const breakStr = formatTime(r.breakMs);
                 const workStr = formatTime(r.workMs);
-                
                 const hours = r.workMs / 3600000;
                 const pay = (hours * db_hourlyRate).toFixed(2);
 
-                const row = `${date},${name},${inTime},${outTime},${breakStr},${workStr},${pay}`;
+                const row = `${date},${name},${inTime},${outTime},${workStr},${pay}`;
                 csvContent += row + "\r\n";
             });
         });
@@ -598,31 +574,29 @@
 
         activeStaff.forEach(s => {
             const name = s.name;
-            let status = 'idle', wMs = 0, bMs = 0, label = 'Mark', pillClass = 'pill-idle';
+            let status = 'out', wMs = 0, label = 'Mark', pillClass = 'pill-idle';
 
             if(isFuture) { label = 'Not Marked'; pillClass = 'pill-idle'; } 
             else if(isLive) {
-                if(!db_live[name]) db_live[name] = { state: 'idle', lastAction: 0, workMs: 0, breakMs: 0, startTime: null };
+                if(!db_live[name]) db_live[name] = { state: 'out', lastAction: 0, totalWorkMs: 0, startTime: null };
                 const l = db_live[name];
                 status = l.state;
-                const t = calcTimes(l);
-                wMs = t.w; bMs = t.b;
+                wMs = calcTotalTime(l);
+
                 if(status === 'in') { label = 'Punched In'; pillClass = 'pill-in'; p++; }
-                else if(status === 'break') { label = 'On Break'; pillClass = 'pill-break'; p++; }
-                else if(status === 'out') { label = 'Present'; pillClass = 'pill-out'; p++; }
+                else if(l.totalWorkMs > 0) { label = 'Present (Out)'; pillClass = 'pill-out'; p++; }
                 else if(status === 'absent') { label = 'Absent'; pillClass = 'pill-absent'; a++; }
                 else { a++; }
             } else {
                 const h = db_history[appState.selectedDate];
                 if(h && h[name]) { 
-                    status = 'done'; wMs = h[name].workMs || 0; bMs = h[name].breakMs || 0;
-                    label = 'Present'; pillClass = 'pill-in'; p++; 
+                    status = 'done'; wMs = h[name].workMs || 0; 
+                    label = 'Present'; pillClass = 'pill-out'; p++; 
                 } else { label = 'Absent'; pillClass = 'pill-out'; a++; }
             }
 
             totalH += wMs;
             const safeName = name.replace(/\s/g, '_');
-            const shiftDuration = wMs; 
 
             container.innerHTML += `
                 <div class="staff-card" onclick="openActionModal('${name}')">
@@ -635,16 +609,12 @@
                     </div>
                     <div class="card-row-bottom">
                         <div class="mini-stat">
-                            <span class="mini-label">Work Time</span>
-                            <span id="w-${safeName}" class="mini-val val-work ${status==='in'?'ticking':''}">${formatTime(wMs)}</span>
-                        </div>
-                        <div class="mini-stat" style="text-align:center;">
-                            <span class="mini-label">Break Time</span>
-                            <span id="b-${safeName}" class="mini-val val-break">${formatTime(bMs)}</span>
+                            <span class="mini-label">Status</span>
+                            <span class="mini-val" style="color:${status==='in'?'var(--green)':'var(--text-sub)'}">${status==='in'?'Active Now':'Checked Out'}</span>
                         </div>
                         <div class="mini-stat" style="text-align:right;">
-                            <span class="mini-label">Shift Duration</span>
-                            <span id="t-${safeName}" class="mini-val val-total ${status==='in'?'ticking':''}">${formatTime(shiftDuration)}</span>
+                            <span class="mini-label">Total Work Today</span>
+                            <span id="t-${safeName}" class="mini-val val-work ${status==='in'?'ticking':''}">${formatTime(wMs)}</span>
                         </div>
                     </div>
                 </div>
@@ -707,30 +677,28 @@
         const l = db_live[name];
         const container = document.getElementById('modalActions');
         const isLive = (appState.selectedDate === appState.todayStr);
-        let w = 0, b = 0;
+        let w = 0;
         if(isLive) {
-            const t = calcTimes(l); w = t.w; b = t.b;
+            w = calcTotalTime(l);
         } else {
             const h = db_history[appState.selectedDate];
-            if(h && h[name]) { w = h[name].workMs || 0; b = h[name].breakMs || 0; }
+            if(h && h[name]) { w = h[name].workMs || 0; }
         }
-        document.getElementById('modalWorkTimer').textContent = formatTime(w);
-        document.getElementById('modalBreakTimer').textContent = formatTime(b);
         document.getElementById('modalTotalTimer').textContent = formatTime(w);
+        
         const manualSection = document.getElementById('modalManualSection');
         manualSection.style.display = isLive ? 'block' : 'none';
         container.innerHTML = '';
+        
         if(isLive) {
-            if(l.state === 'idle') {
-                container.innerHTML = `<button class="action-btn" style="background:var(--green); color:white" onclick="changeState('in')"><i class="fas fa-fingerprint"></i> Punch In Now</button><button class="action-btn btn-absent" onclick="changeState('absent')"><i class="fas fa-user-times"></i> Mark Absent</button>`;
+            // New Logic: Just In or Out
+            if(l.state === 'out' || l.state === 'idle' || l.state === 'absent') {
+                container.innerHTML = `
+                    <button class="action-btn" style="background:var(--green); color:white" onclick="changeState('in')"><i class="fas fa-fingerprint"></i> Punch In</button>
+                    ${l.state !== 'absent' ? `<button class="action-btn btn-absent" onclick="changeState('absent')"><i class="fas fa-user-times"></i> Mark Absent</button>` : `<button class="action-btn" onclick="changeState('idle')" style="background:#eee; color:#333">Undo Absent</button>`}
+                `;
             } else if(l.state === 'in') {
-                container.innerHTML = `<button class="action-btn" style="background:var(--orange); color:white" onclick="changeState('break')"><i class="fas fa-coffee"></i> Start Break</button><button class="action-btn" style="background:var(--red); color:white" onclick="changeState('out')"><i class="fas fa-sign-out-alt"></i> Punch Out</button>`;
-            } else if(l.state === 'break') {
-                container.innerHTML = `<button class="action-btn" style="background:var(--pb-blue); color:white" onclick="changeState('in')"><i class="fas fa-play"></i> End Break</button>`;
-            } else if(l.state === 'out') {
-                container.innerHTML = `<button class="action-btn" disabled style="background:#eee; color:#999">Shift Ended</button>`;
-            } else if(l.state === 'absent') {
-                container.innerHTML = `<button class="action-btn" onclick="changeState('idle')" style="background:#eee; color:#333">Undo Absent</button>`;
+                container.innerHTML = `<button class="action-btn" style="background:var(--red); color:white" onclick="changeState('out')"><i class="fas fa-sign-out-alt"></i> Punch Out</button>`;
             }
         } else {
              container.innerHTML = `<div style="text-align:center; padding:10px; color:var(--text-sub); font-size:0.9rem;">Historical Record</div><button class="action-btn" onclick="removeStaffFromDay()" style="background:var(--bg); border:1px solid var(--border); color:var(--text-sub); margin-top:10px;"><i class="fas fa-eye-slash"></i> Hide from this Date</button>`;
@@ -747,53 +715,27 @@
         const entryMs = entryTime.getTime();
         const name = appState.activeStaffId;
         const l = db_live[name];
-        const now = new Date();
-
+        
         if(type === 'fix_in') {
-            l.startTime = entryMs;
-            if(l.state === 'idle' || l.state === 'absent') {
-                l.state = 'in'; 
-                l.lastAction = entryMs; 
-                l.workMs = 0; 
-                l.breakMs = 0;
-            } 
-            else {
-                l.workMs = (l.lastAction - l.startTime) - l.breakMs;
-                if(l.workMs < 0) l.workMs = 0; 
-            }
-            showToast("Start Time Updated", "success");
+            if(l.state !== 'in') return showToast("Must be currently Punched In", "error");
+            l.lastAction = entryMs; // Moves the start point of current session
+            // Don't change totalWorkMs, just current session start
+            if(!l.startTime) l.startTime = entryMs; // Fix day start if first punch
+            showToast("Current session start updated", "success");
         } 
         else if(type === 'fix_out') {
-            l.lastAction = entryMs;
+            if(l.state !== 'in') return showToast("Must be currently Punched In", "error");
+            // End session retroactively
+            const sessionDuration = entryMs - l.lastAction;
+            if(sessionDuration < 0) return showToast("Out time cannot be before In time", "error");
+            l.totalWorkMs = (l.totalWorkMs || 0) + sessionDuration;
             l.state = 'out';
-            if(!l.startTime) l.startTime = entryMs;
+            l.lastAction = entryMs;
             
-            l.workMs = (l.lastAction - l.startTime) - l.breakMs;
-            if(l.workMs < 0) l.workMs = 0;
+            saveHistory(name, l.totalWorkMs, l.startTime, entryMs);
+            showToast("Shift Ended Retroactively", "success");
+        }
 
-            if(!db_history[appState.todayStr]) db_history[appState.todayStr] = {};
-            db_history[appState.todayStr][name] = { workMs: l.workMs, breakMs: l.breakMs, startTime: l.startTime, endTime: l.lastAction };
-            localStorage.setItem('pb_history_data', JSON.stringify(db_history));
-            showToast("Shift Ended", "success");
-        }
-        else if(type === 'retro_break_start') {
-            const addedWork = entryMs - l.lastAction;
-            if(l.state === 'in' && addedWork > 0) {
-                 l.workMs += addedWork;
-            }
-            l.lastAction = entryMs;
-            l.state = 'break';
-            showToast("Set to Break", "success");
-        }
-        else if(type === 'retro_break_end') {
-            const addedBreak = entryMs - l.lastAction;
-            if(l.state === 'break' && addedBreak > 0) {
-                l.breakMs += addedBreak;
-            }
-            l.lastAction = entryMs;
-            l.state = 'in';
-            showToast("Set to Work", "success");
-        }
         localStorage.setItem('pb_live_data', JSON.stringify(db_live));
         updateActionUI();
         renderAttendanceView();
@@ -811,25 +753,54 @@
     }
 
     function changeState(newState) {
-        const name = appState.activeStaffId; const now = Date.now(); const l = db_live[name];
-        if(l.state === 'idle' && newState === 'in') l.startTime = now;
-        if(l.state === 'in') l.workMs += (now - l.lastAction);
-        if(l.state === 'break') l.breakMs += (now - l.lastAction);
-        l.state = newState; l.lastAction = now;
-        if(newState === 'out') {
-            if(!db_history[appState.todayStr]) db_history[appState.todayStr] = {};
-            db_history[appState.todayStr][name] = { workMs: l.workMs, breakMs: l.breakMs, startTime: l.startTime, endTime: now };
-            localStorage.setItem('pb_history_data', JSON.stringify(db_history));
+        const name = appState.activeStaffId; const now = Date.now(); 
+        const l = db_live[name];
+        
+        if(newState === 'in') {
+            // Start a new session
+            l.state = 'in';
+            l.lastAction = now; // Mark Start of this segment
+            if(!l.startTime) l.startTime = now; // Mark First Punch of day
+            if(!l.totalWorkMs) l.totalWorkMs = 0;
+        } 
+        else if(newState === 'out') {
+            // End session and accumulate
+            if(l.state === 'in') {
+                const sessionDuration = now - l.lastAction;
+                l.totalWorkMs = (l.totalWorkMs || 0) + sessionDuration;
+            }
+            l.state = 'out';
+            l.lastAction = now; // Mark End time
+            
+            saveHistory(name, l.totalWorkMs, l.startTime, now);
         }
+        else if(newState === 'absent') {
+            l.state = 'absent';
+        }
+        else if(newState === 'idle') {
+            l.state = 'out'; // Reset to out/idle
+        }
+
         localStorage.setItem('pb_live_data', JSON.stringify(db_live));
         updateActionUI(); renderAttendanceView();
     }
     
-    function calcTimes(l) {
-        let w = l.workMs || 0; let b = l.breakMs || 0; const now = Date.now();
-        if(l.state === 'in') w += (now - l.lastAction);
-        if(l.state === 'break') b += (now - l.lastAction);
-        return { w, b };
+    function saveHistory(name, workMs, start, end) {
+         if(!db_history[appState.todayStr]) db_history[appState.todayStr] = {};
+         db_history[appState.todayStr][name] = { 
+             workMs: workMs, 
+             startTime: start, 
+             endTime: end 
+         };
+         localStorage.setItem('pb_history_data', JSON.stringify(db_history));
+    }
+
+    function calcTotalTime(l) {
+        let total = l.totalWorkMs || 0;
+        if(l.state === 'in') {
+            total += (Date.now() - l.lastAction);
+        }
+        return total;
     }
     
     function updateHeartbeat() {
@@ -838,17 +809,13 @@
         const activeStaff = db_staff.filter(s => s.joined <= appState.selectedDate && !removedForDay.includes(s.name));
         activeStaff.forEach(s => {
             const name = s.name; const l = db_live[name]; if(!l) return;
-            const t = calcTimes(l); totalH += t.w;
-            const wEl = document.getElementById(`w-${name.replace(/\s/g, '_')}`);
-            if(wEl) {
-                wEl.textContent = formatTime(t.w);
-                document.getElementById(`b-${name.replace(/\s/g, '_')}`).textContent = formatTime(t.b);
-                document.getElementById(`t-${name.replace(/\s/g, '_')}`).textContent = formatTime(t.w);
-            }
+            const w = calcTotalTime(l); totalH += w;
+            
+            const wEl = document.getElementById(`t-${name.replace(/\s/g, '_')}`);
+            if(wEl) wEl.textContent = formatTime(w);
+            
             if(appState.activeStaffId === name && document.getElementById('actionModal').style.display === 'flex') {
-                document.getElementById('modalWorkTimer').textContent = formatTime(t.w);
-                document.getElementById('modalBreakTimer').textContent = formatTime(t.b);
-                document.getElementById('modalTotalTimer').textContent = formatTime(t.w);
+                document.getElementById('modalTotalTimer').textContent = formatTime(w);
             }
         });
         document.getElementById('statH').textContent = Math.floor(totalH/3600000) + 'h';
@@ -908,7 +875,7 @@
             db_removed[appState.selectedDate].push(name);
             localStorage.setItem('pb_removed_data', JSON.stringify(db_removed));
             if(appState.selectedDate === appState.todayStr) {
-                db_live[name] = { state: 'idle', lastAction: 0, workMs: 0, breakMs: 0, startTime: null };
+                db_live[name] = { state: 'out', lastAction: 0, totalWorkMs: 0, startTime: null };
                 localStorage.setItem('pb_live_data', JSON.stringify(db_live));
             }
             closeModal(); renderAttendanceView(); showToast("Removed");
@@ -951,7 +918,7 @@
                 const d = db_history[date]; let rows = '';
                 Object.keys(d).forEach(name => {
                     const info = d[name];
-                    rows += `<div class="h-row"><div class="h-main-row"><span class="h-name">${name}</span><span class="h-time">${formatTime(info.workMs)}</span></div><div class="h-details"><div class="h-detail-item"><i class="fas fa-sign-in-alt"></i> ${formatClockTime(info.startTime)}</div><div class="h-detail-item"><i class="fas fa-sign-out-alt"></i> ${formatClockTime(info.endTime)}</div><div class="h-detail-item"><i class="fas fa-mug-hot"></i> ${formatTime(info.breakMs)}</div></div></div>`;
+                    rows += `<div class="h-row"><div class="h-main-row"><span class="h-name">${name}</span><span class="h-time">${formatTime(info.workMs)}</span></div><div class="h-details"><div class="h-detail-item"><i class="fas fa-sign-in-alt"></i> First: ${formatClockTime(info.startTime)}</div><div class="h-detail-item"><i class="fas fa-sign-out-alt"></i> Last: ${formatClockTime(info.endTime)}</div></div></div>`;
                 });
                 c.innerHTML += `<div class="history-date-block"><div class="h-header"><span>${date}</span><span>${Object.keys(d).length} Present</span></div>${rows}</div>`;
             });
@@ -1006,9 +973,8 @@
                     <div class="history-date-block">
                         <div class="h-header"><span>${date}</span> <span style="color:var(--pb-blue)">${formatTime(dayData.workMs)}</span></div>
                         <div class="h-details" style="padding:10px; background:var(--card-bg)">
-                            <div class="h-detail-item">IN: ${formatClockTime(dayData.startTime)}</div>
-                            <div class="h-detail-item">OUT: ${formatClockTime(dayData.endTime)}</div>
-                            <div class="h-detail-item">BREAK: ${formatTime(dayData.breakMs)}</div>
+                            <div class="h-detail-item">FIRST IN: ${formatClockTime(dayData.startTime)}</div>
+                            <div class="h-detail-item">LAST OUT: ${formatClockTime(dayData.endTime)}</div>
                         </div>
                     </div>`;
                 }
@@ -1024,6 +990,14 @@
             </div>` + c.innerHTML;
         }
     }
+   
+    window.addEventListener('storage', function(e) {
+        if(e.key === 'pb_live_data' || e.key === 'pb_sync_trigger') {
+            db_staff = JSON.parse(localStorage.getItem('pb_db_staff')) || []; 
+            db_live = JSON.parse(localStorage.getItem('pb_live_data')) || {};
+            renderAttendanceView();
+        }
+    });
 
 </script>
 </body>
