@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>High Accuracy Kiosk</title>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* --- THEME --- */
+        :root { 
+            --pb-blue: #1040D5; --bg: #F0F2F5; --card-bg: #ffffff;
+            --text-main: #1C1E21; --text-sub: #666666; --border: #eeeeee;
+            --green: #25D366; --red: #FF3B30; --orange: #FF9500; 
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #e0e0e0; 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            height: 100vh; 
+            height: 100dvh; 
+            overflow: hidden; 
+        }
+
+        .mobile-frame { 
+            width: 100%; 
+            max-width: 450px; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.1); 
+            height: 100%; 
+        }
+
+        /* HEADER */
+        .header { 
+            background: var(--pb-blue); color: white; 
+            padding: 15px; flex-shrink: 0; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+        .business-name { font-weight: 700; font-size: 1.1rem; }
+        .live-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .live-dot { width: 8px; height: 8px; background: #25D366; border-radius: 50%; box-shadow: 0 0 8px #25D366; animation: pulse 2s infinite; }
+
+        /* CAMERA SECTION */
+        .camera-section { 
+            flex: 1; 
+            margin: 15px; 
+            background: #000; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            position: relative; 
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.9; }
+        
+        /* HUD OVERLAY */
+        .scan-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            pointer-events: none; transition: opacity 0.5s; 
+        }
+        
+        /* IDLE MODE */
+        .scan-overlay.idle { opacity: 0; }
+
+        .scan-box { 
+            width: 70%; height: 55%; 
+            border: 2px solid rgba(255,255,255,0.4); border-radius: 24px; 
+            transition: all 0.2s; position: relative; 
+            display: flex; flex-direction: column; justify-content: flex-end; 
+        }
+        .scan-box.active { border-color: var(--pb-blue); box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); background: rgba(0,0,0,0.1); }
+        
+        .status-pill { 
+            margin-top: 20px;
+            color: white; background: rgba(0,0,0,0.6); 
+            padding: 8px 20px; border-radius: 20px; 
+            font-size: 0.9rem; backdrop-filter: blur(4px); 
+            font-weight: bold; transition: all 0.2s;
+        }
+
+        .progress-wrapper { width: 80%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 10px; margin: 0 auto 15px auto; overflow: hidden; opacity: 0; transition: opacity 0.2s; }
+        .progress-bar { height: 100%; width: 0%; background: var(--green); transition: width 0.1s linear; }
+        .scan-box.active .progress-wrapper { opacity: 1; }
+
+        /* FAB */
+        .fab { 
+            position: absolute; bottom: 30px; right: 20px; 
+            background: var(--pb-blue); color: white; 
+            width: 56px; height: 56px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; border: none; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(16, 64, 213, 0.4); 
+            z-index: 20; transition: transform 0.2s; 
+        }
+        .fab:active { transform: scale(0.95); }
+
+        /* MODALS */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 100;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        .pass-box { background: white; padding: 25px; border-radius: 15px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .pass-input { width: 100%; padding: 12px; font-size: 1.2rem; text-align: center; letter-spacing: 5px; margin: 15px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-blue { background: var(--pb-blue); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
+
+        .staff-modal {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 85%;
+            background: var(--bg); border-radius: 20px 20px 0 0;
+            z-index: 110; transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+        }
+        .staff-modal.open { transform: translateY(0); }
+        .modal-header { 
+            padding: 20px; background: var(--card-bg); border-radius: 20px 20px 0 0;
+            font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-sub); }
+        .staff-list { flex: 1; overflow-y: auto; padding: 15px; }
+
+        .staff-card { 
+            background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; 
+            display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); 
+            cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .staff-card.disabled { opacity: 0.6; background: #f9f9f9; cursor: not-allowed; }
+        .avatar { width: 40px; height: 40px; background: #EBF0FF; color: var(--pb-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .face-needed { color: var(--pb-blue); background: rgba(16, 64, 213, 0.1); padding: 5px 10px; border-radius: 6px; }
+
+        /* FEEDBACK */
+        .feedback-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 50;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+        .fb-icon { font-size: 5rem; margin-bottom: 20px; }
+        .fb-title { font-size: 2rem; font-weight: 800; text-transform: uppercase; color: var(--text-main); }
+        .fb-sub { font-size: 1.3rem; margin-top: 10px; color: var(--text-sub); font-weight: 500;}
+        .fb-time { margin-top: 10px; font-family: monospace; color: var(--pb-blue); font-size: 1.2rem; background: #EBF0FF; padding: 5px 15px; border-radius: 8px;}
+
+        .fb-in { color: var(--green); }
+        .fb-out { color: var(--red); }
+
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-frame">
+        <div id="loader">
+            <div style="font-weight:bold; font-size:1.1rem; color:var(--text-main);">Starting Ultra-Secure Kiosk...</div>
+            <div style="font-size:0.8rem; margin-top:5px;">Loading SSD MobileNet V1...</div>
+        </div>
+
+        <div class="header">
+            <div class="business-name">Attendance Kiosk</div>
+            <div class="live-badge"><div class="live-dot"></div> ONLINE</div>
+        </div>
+
+        <div class="camera-section">
+            <video id="video" autoplay muted playsinline></video>
+            
+            <div class="scan-overlay" id="hudOverlay">
+                <div class="scan-box" id="scanBox">
+                    <div class="progress-wrapper"><div class="progress-bar" id="progressBar"></div></div>
+                </div>
+                <div class="status-pill" id="statusPill">Looking for Face...</div>
+            </div>
+        </div>
+
+        <div id="feedbackModal" class="feedback-modal">
+            <div class="fb-icon" id="fbIcon"><i class="fas fa-check"></i></div>
+            <div class="fb-title" id="fbTitle">PUNCHED IN</div>
+            <div class="fb-sub" id="fbName">Name</div>
+            <div class="fb-time" id="fbTime">00:00</div>
+        </div>
+
+        <button class="fab" onclick="tryOpenStaffList()"><i class="fas fa-plus"></i></button>
+
+        <div class="modal-overlay" id="passModal">
+            <div class="pass-box">
+                <div style="font-weight:bold; margin-bottom:5px;">Admin Access</div>
+                <div style="font-size:0.8rem; color:#666;">Enter password to enroll staff</div>
+                <input type="password" id="adminPassInput" class="pass-input" placeholder="****">
+                <button class="btn-blue" onclick="checkAdminPass()">Unlock</button>
+                <div style="margin-top:15px; font-size:0.8rem; color:#999; cursor:pointer;" onclick="closePassModal()">Cancel</div>
+            </div>
+        </div>
+
+        <div class="staff-modal" id="staffModal">
+            <div class="modal-header">
+                <span>Enroll Staff</span>
+                <button class="close-btn" onclick="closeStaffList()">&times;</button>
+            </div>
+            <div class="staff-list" id="staffListContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const KEYS = { STAFF: 'pb_db_staff', LIVE: 'pb_live_data', HIST: 'pb_history_data', SYNC: 'pb_sync_trigger', PASS: 'pb_password' };
+        
+        let SSD_OPTS; 
+        const IDLE_TIMEOUT_MS = 20000; 
+        const COOLDOWN_MS = 10000; 
+        const MATCH_THRESHOLD = 0.4; 
+        const VERIFY_SPEED = 6.0; 
+        const DECAY_SPEED = 5; 
+        const MIN_BOX_WIDTH = 150; // New Rule: Face must be > 150px wide
+
+        let db_staff = [];
+        let labeledDescriptors = [];
+        let lastPunchTimes = {}; 
+        let isProcessing = false;
+        
+        let lastFaceSeenTime = Date.now(); 
+        let currentMatchLabel = null;
+        let matchConfidence = 0; 
+
+        window.addEventListener('load', async () => {
+            if(typeof faceapi !== 'undefined') {
+                // ULTRA STRICT SETTINGS
+                // 0.9 minConfidence means 90% certainty required. 
+                // This eliminates hands/shoulders completely.
+                SSD_OPTS = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.9 });
+            } else {
+                alert("AI Library Error"); return;
+            }
+
+            syncData();
+            window.addEventListener('storage', (e) => {
+                if(e.key === KEYS.STAFF) { syncData(); renderStaffList(); }
+            });
+
+            await loadModels();
+            await startCamera();
+            document.getElementById('loader').style.display = 'none';
+            setInterval(detectLoop, 200);
+        });
+
+        function syncData() {
+            db_staff = JSON.parse(localStorage.getItem(KEYS.STAFF)) || [];
+            labeledDescriptors = [];
+            if(db_staff.length) {
+                db_staff.forEach(s => {
+                    if(s.faceData) {
+                        labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(s.name, [new Float32Array(Object.values(s.faceData))]));
+                    }
+                });
+            }
+        }
+
+        async function loadModels() {
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            await Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+        }
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                document.getElementById('video').srcObject = stream;
+            } catch(e) { alert("Camera Error"); }
+        }
+
+        async function detectLoop() {
+            const isMenuOpen = document.getElementById('staffModal').classList.contains('open');
+            const isPassOpen = document.getElementById('passModal').style.display === 'flex';
+            const hud = document.getElementById('hudOverlay');
+            const pill = document.getElementById('statusPill');
+            
+            if(Date.now() - lastFaceSeenTime > IDLE_TIMEOUT_MS) hud.classList.add('idle'); 
+            else hud.classList.remove('idle');
+
+            if(isProcessing || isMenuOpen || isPassOpen || !SSD_OPTS) return;
+
+            if(labeledDescriptors.length === 0) {
+                pill.innerText = "No Staff Enrolled";
+                lastFaceSeenTime = Date.now();
+                return;
+            }
+
+            const video = document.getElementById('video');
+            const box = document.getElementById('scanBox');
+            const bar = document.getElementById('progressBar');
+
+            // DETECT
+            const detection = await faceapi.detectSingleFace(video, SSD_OPTS).withFaceLandmarks().withFaceDescriptor();
+
+            if (detection) {
+                // BOX SIZE CHECK (New)
+                // If box is too small, it's likely a background person, not the user.
+                if(detection.detection.box.width < MIN_BOX_WIDTH) {
+                    pill.innerText = "Come Closer";
+                    pill.style.background = "rgba(0,0,0,0.6)";
+                    box.classList.remove('active');
+                    matchConfidence = 0;
+                    return;
+                }
+
+                lastFaceSeenTime = Date.now(); 
+                const matcher = new faceapi.FaceMatcher(labeledDescriptors, MATCH_THRESHOLD);
+                const match = matcher.findBestMatch(detection.descriptor);
+                const name = match.label;
+
+                if (name !== 'unknown') {
+                    const now = Date.now();
+                    if (lastPunchTimes[name] && (now - lastPunchTimes[name] < COOLDOWN_MS)) {
+                        const wait = Math.ceil((COOLDOWN_MS - (now - lastPunchTimes[name]))/1000);
+                        pill.innerText = `Wait ${wait}s`;
+                        pill.style.background = "rgba(0,0,0,0.6)";
+                        box.classList.remove('active');
+                        matchConfidence = 0;
+                    } 
+                    else {
+                        if (currentMatchLabel === name) {
+                            matchConfidence += VERIFY_SPEED;
+                            pill.innerText = `Hold Still... ${Math.floor(matchConfidence)}%`;
+                            pill.style.background = "var(--pb-blue)";
+                            box.classList.add('active');
+                        } else {
+                            currentMatchLabel = name;
+                            matchConfidence = 0;
+                        }
+                    }
+                } else {
+                    pill.innerText = "Unknown Person";
+                    pill.style.background = "var(--red)";
+                    box.classList.remove('active');
+                    matchConfidence = 0;
+                }
+            } else {
+                pill.innerText = "Scanning...";
+                pill.style.background = "rgba(0,0,0,0.6)";
+                box.classList.remove('active');
+                matchConfidence -= DECAY_SPEED;
+            }
+
+            if(matchConfidence < 0) matchConfidence = 0;
+            if(matchConfidence > 100) matchConfidence = 100;
+            bar.style.width = matchConfidence + "%";
+
+            if(matchConfidence >= 100) {
+                performAction(currentMatchLabel);
+                matchConfidence = 0;
+            }
+        }
+
+        function performAction(name) {
+            isProcessing = true;
+            lastPunchTimes[name] = Date.now();
+            
+            let live = JSON.parse(localStorage.getItem(KEYS.LIVE)) || {};
+            let hist = JSON.parse(localStorage.getItem(KEYS.HIST)) || {};
+            const user = live[name] || { state: 'out', totalWorkMs: 0, startTime: null };
+            const todayStr = new Date().toISOString().split('T')[0];
+            const now = Date.now();
+            let type = '';
+
+            if(user.state === 'in') {
+                type = 'out';
+                const session = now - user.lastAction;
+                user.totalWorkMs = (user.totalWorkMs || 0) + session;
+                user.state = 'out';
+                user.lastAction = now;
+                if(!hist[todayStr]) hist[todayStr] = {};
+                hist[todayStr][name] = { workMs: user.totalWorkMs, startTime: user.startTime, endTime: now };
+                localStorage.setItem(KEYS.HIST, JSON.stringify(hist));
+            } else {
+                type = 'in';
+                user.state = 'in';
+                user.lastAction = now;
+                if(!user.startTime) user.startTime = now;
+            }
+
+            live[name] = user;
+            localStorage.setItem(KEYS.LIVE, JSON.stringify(live));
+            localStorage.setItem(KEYS.SYNC, Date.now());
+
+            showFeedback(type, name, user.totalWorkMs);
+        }
+
+        function showFeedback(type, name, totalMs) {
+            const modal = document.getElementById('feedbackModal');
+            const icon = document.getElementById('fbIcon');
+            const title = document.getElementById('fbTitle');
+            const timeEl = document.getElementById('fbTime');
+            
+            modal.style.display = 'flex';
+            document.getElementById('fbName').innerText = name;
+            
+            if(type === 'in') {
+                title.innerText = "PUNCHED IN";
+                title.style.color = "var(--green)";
+                icon.innerHTML = '<i class="fas fa-sign-in-alt fb-in"></i>';
+                timeEl.innerText = new Date().toLocaleTimeString();
+                speak(`Welcome, ${name}`);
+            } else {
+                title.innerText = "PUNCHED OUT";
+                title.style.color = "var(--text-main)";
+                icon.innerHTML = '<i class="fas fa-sign-out-alt fb-out"></i>';
+                const h = Math.floor(totalMs / 3600000);
+                const m = Math.floor((totalMs % 3600000) / 60000);
+                timeEl.innerText = `Total: ${h}h ${m}m`;
+                speak(`Goodbye, ${name}`);
+            }
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+                isProcessing = false;
+                document.getElementById('progressBar').style.width = '0%';
+                document.getElementById('statusPill').innerText = "Scanning...";
+                document.getElementById('scanBox').classList.remove('active');
+                lastFaceSeenTime = Date.now();
+            }, 3000);
+        }
+
+        function speak(txt) {
+            const u = new SpeechSynthesisUtterance(txt);
+            window.speechSynthesis.speak(u);
+        }
+
+        function tryOpenStaffList() {
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('passModal').style.display = 'flex';
+            document.getElementById('adminPassInput').focus();
+        }
+
+        function closePassModal() {
+            document.getElementById('passModal').style.display = 'none';
+        }
+
+        function checkAdminPass() {
+            const input = document.getElementById('adminPassInput').value;
+            const storedPass = localStorage.getItem(KEYS.PASS) || '1234';
+            if(input === storedPass) {
+                closePassModal();
+                openStaffList();
+            } else {
+                alert("Wrong Password");
+            }
+        }
+
+        function openStaffList() {
+            renderStaffList();
+            document.getElementById('staffModal').classList.add('open');
+        }
+
+        function closeStaffList() {
+            document.getElementById('staffModal').classList.remove('open');
+        }
+
+        function renderStaffList() {
+            const c = document.getElementById('staffListContainer');
+            c.innerHTML = '';
+            if(db_staff.length === 0) c.innerHTML = '<div style="padding:20px; text-align:center; color:#999">No Staff Added</div>';
+            
+            db_staff.forEach((s, idx) => {
+                const hasFace = !!s.faceData;
+                const clickAction = hasFace ? "alert('User already enrolled. Delete from Admin Panel to reset.')" : `enrollUser(${idx})`;
+                const cls = hasFace ? 'staff-card disabled' : 'staff-card';
+                
+                c.innerHTML += `
+                    <div class="${cls}" onclick="${clickAction}">
+                        <div class="avatar">${s.name[0]}</div>
+                        <div style="font-weight:600;">${s.name}</div>
+                        <div class="s-status ${!hasFace ? 'face-needed' : ''}">
+                            ${hasFace ? '<i class="fas fa-check"></i> Enrolled' : '<i class="fas fa-camera"></i> Scan Face'}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function enrollUser(index) {
+            const s = db_staff[index];
+            if(confirm(`Enroll ${s.name}? Look at camera.`)) {
+                closeStaffList();
+                isProcessing = true; 
+                document.getElementById('statusPill').innerText = `Scanning ${s.name}...`;
+                document.getElementById('scanBox').style.borderColor = "var(--orange)";
+                document.getElementById('hudOverlay').classList.remove('idle');
+
+                setTimeout(async () => {
+                    const video = document.getElementById('video');
+                    const det = await faceapi.detectSingleFace(video, SSD_OPTS).withFaceLandmarks().withFaceDescriptor();
+                    
+                    if(det) {
+                        if(det.detection.box.width < MIN_BOX_WIDTH) {
+                            alert("Too far away! Come closer.");
+                            resetScanUI();
+                            return;
+                        }
+                        if(labeledDescriptors.length > 0) {
+                            const matcher = new faceapi.FaceMatcher(labeledDescriptors, MATCH_THRESHOLD); 
+                            const match = matcher.findBestMatch(det.descriptor);
+                            if(match.label !== 'unknown') {
+                                alert(`ACCESS DENIED: This face is already enrolled as ${match.label}!`);
+                                resetScanUI();
+                                return;
+                            }
+                        }
+                        db_staff[index].faceData = Array.from(det.descriptor);
+                        localStorage.setItem(KEYS.STAFF, JSON.stringify(db_staff));
+                        syncData(); 
+                        alert("Enrollment Successful!");
+                    } else {
+                        alert("Face not detected. Try again.");
+                    }
+                    resetScanUI();
+                }, 1000);
+            }
+        }
+
+        function resetScanUI() {
+            document.getElementById('scanBox').style.borderColor = "rgba(255,255,255,0.4)";
+            isProcessing = false;
+        }
+    </script>
+</body>
+</html>
